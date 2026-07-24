@@ -1,17 +1,20 @@
-package frc.robot.util.io.motors.pivot;
+package first.robot.util.io.motors.pivot;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import frc.robot.util.io.motors.MotorIOSim;
+import static org.wpilib.units.Units.Radians;
+import static org.wpilib.units.Units.Rotations;
+
+import first.robot.util.io.motors.MotorIOSim;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.util.Units;
+import org.wpilib.simulation.SingleJointedArmSim;
+import org.wpilib.units.measure.Angle;
 
 public class PivotIOSim extends MotorIOSim implements PivotIO {
   private final SingleJointedArmSim sim;
 
   public PivotIOSim(
       DCMotor motorModel,
-      MechanismConstraints constraints,
+      RotationalMechanismConstraints constraints,
       double kP,
       double kD,
       int numFollowers) {
@@ -32,19 +35,23 @@ public class PivotIOSim extends MotorIOSim implements PivotIO {
   public void updateInputs(PivotIOInputs inputs) {
     if (isClosedLoop) {
       appliedVoltage =
-          MathUtil.clamp(pid.calculate(Units.radiansToRotations(sim.getAngleRads())), -12.0, 12.0);
+          Math.clamp(pid.calculate(Units.radiansToRotations(sim.getAngle())), -12.0, 12.0);
     }
     updateMotorInputs(inputs);
     sim.setInputVoltage(appliedVoltage);
     sim.update(0.02);
-    inputs.positionDeg = Units.radiansToDegrees(sim.getAngleRads());
-    inputs.statorCurrentAmps = sim.getCurrentDrawAmps();
-    inputs.supplyCurrentAmps = appliedVoltage / 12.0 * inputs.statorCurrentAmps;
+    inputs.positionDeg = Units.radiansToDegrees(sim.getAngle());
+    inputs.statorCurrentAmps = sim.getCurrentDraw();
   }
 
   @Override
-  public void setPosition(double deg) {
-    pid.setSetpoint(Units.degreesToRotations(deg));
+  public void setPosition(Angle angle) {
+    pid.setSetpoint(angle.in(Rotations));
     isClosedLoop = true;
+  }
+
+  @Override
+  public void resetPosition(Angle angle) {
+    sim.setState(angle.in(Radians), 0.0);
   }
 }

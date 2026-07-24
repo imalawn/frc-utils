@@ -1,10 +1,9 @@
 package first.robot.util.subsystems;
 
+import first.robot.util.commands.Commands;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.NeedsNameBuilderStage;
 import org.wpilib.command3.Scheduler;
-
-import first.robot.util.commands.Commands;
 
 public abstract class Subsystem extends Mechanism {
   @SuppressWarnings("this-escape")

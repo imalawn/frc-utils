@@ -1,26 +1,24 @@
-package frc.robot.util.io.motors.roller;
+package first.robot.util.io.motors.roller;
 
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import frc.robot.util.io.motors.MotorIOSim;
+import first.robot.util.io.motors.MotorIOSim;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.Models;
+import org.wpilib.math.util.Units;
+import org.wpilib.simulation.FlywheelSim;
 
 public class RollerIOSim extends MotorIOSim implements RollerIO {
-  private final DCMotorSim sim;
+  private final FlywheelSim sim;
 
   public RollerIOSim(
       DCMotor motorModel,
-      MechanismConstraints constraints,
+      RotationalMechanismConstraints constraints,
       double kP,
       double kD,
       int numFollowers) {
     super(kP, kD, numFollowers);
     sim =
-        new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
+        new FlywheelSim(
+            Models.flywheelFromPhysicalConstants(
                 motorModel, constraints.moi(), constraints.reduction()),
             motorModel);
   }
@@ -29,15 +27,14 @@ public class RollerIOSim extends MotorIOSim implements RollerIO {
   public void updateInputs(RollerIOInputs inputs) {
     if (isClosedLoop) {
       appliedVoltage =
-          MathUtil.clamp(
-              pid.calculate(sim.getAngularVelocity().in(RotationsPerSecond)), -12.0, 12.0);
+          Math.clamp(
+              pid.calculate(Units.radiansToRotations(sim.getAngularVelocity())), -12.0, 12.0);
     }
     updateMotorInputs(inputs);
     sim.setInputVoltage(appliedVoltage);
     sim.update(0.02);
-    inputs.velocityRPS = sim.getAngularVelocity().in(RotationsPerSecond);
-    inputs.statorCurrentAmps = sim.getCurrentDrawAmps();
-    inputs.supplyCurrentAmps = appliedVoltage / 12.0 * inputs.statorCurrentAmps;
+    inputs.velocityRPS = Units.radiansToRotations(sim.getAngularVelocity());
+    inputs.statorCurrentAmps = sim.getCurrentDraw();
   }
 
   @Override

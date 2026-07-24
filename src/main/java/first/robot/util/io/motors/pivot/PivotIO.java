@@ -1,8 +1,8 @@
-package frc.robot.util.io.motors.pivot;
+package first.robot.util.io.motors.pivot;
 
-import edu.wpi.first.units.measure.Angle;
-import frc.robot.util.io.motors.MotorIO;
+import first.robot.util.io.motors.MotorIO;
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.units.measure.Angle;
 
 public interface PivotIO extends MotorIO {
   @AutoLog
@@ -12,7 +12,7 @@ public interface PivotIO extends MotorIO {
 
   default void updateInputs(PivotIOInputs inputs) {}
 
-  default void setPosition(double deg) {}
+  default void setPosition(Angle angle) {}
 
   default void resetPosition(Angle angle) {}
 }

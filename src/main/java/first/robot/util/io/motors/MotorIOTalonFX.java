@@ -1,37 +1,50 @@
-package frc.robot.util.io.motors;
+package first.robot.util.io.motors;
 
-import static frc.robot.util.PhoenixUtil.tryUntilOk;
+import static first.robot.util.PhoenixUtil.tryUntilOk;
+import static org.wpilib.units.Units.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.CoastOut;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.StaticBrake;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
-import frc.robot.util.PhoenixUtil;
+import first.robot.util.PhoenixUtil;
+import first.robot.util.io.motors.elevator.LinearSystemIO;
+import first.robot.util.io.motors.pivot.PivotIO;
+import first.robot.util.io.motors.roller.RollerIO;
+import first.robot.util.io.sensors.EncoderIOCANcoder;
+import java.util.function.Consumer;
+import org.wpilib.system.Notifier;
+import org.wpilib.units.measure.*;
 
-public class MotorIOTalonFX implements MotorIO {
+public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearSystemIO {
   protected final TalonFX leader;
-  private final TalonFX[] followers;
+  protected final TalonFX[] followers;
 
+  private Consumer<Angle> positionRequest;
+  private VelocityVoltage velocityRequest;
   private final VoltageOut voltageRequest = new VoltageOut(0);
   private final CoastOut coastRequest = new CoastOut();
   private final StaticBrake brakeRequest = new StaticBrake();
 
+  private final StatusSignal<Angle> position;
+  private final StatusSignal<AngularVelocity> velocity;
   private final StatusSignal<Voltage> voltage;
   private final StatusSignal<Current> supplyCurrent;
   private final StatusSignal<Current> statorCurrent;
   private final StatusSignal<Temperature> temp;
-
   private final BaseStatusSignal[] followerTemps;
+
+  private volatile Angle angleResetVal = Rotations.zero();
+  private Notifier resetPosition;
+
+  private boolean positionConfigured;
+  private boolean velocityConfigured;
 
   public MotorIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
     this(canbus, id, new int[0], config, new MotorAlignmentValue[0]);
@@ -52,9 +65,11 @@ public class MotorIOTalonFX implements MotorIO {
     // Configure motors
     tryUntilOk(5, () -> leader.getConfigurator().apply(config));
     for (TalonFX follower : followers) {
-      follower.getConfigurator().apply(config);
+      tryUntilOk(5, () -> follower.getConfigurator().apply(config));
     }
     // Create status signals
+    position = leader.getPosition();
+    velocity = leader.getVelocity();
     voltage = leader.getMotorVoltage();
     supplyCurrent = leader.getSupplyCurrent();
     statorCurrent = leader.getStatorCurrent();
@@ -70,17 +85,74 @@ public class MotorIOTalonFX implements MotorIO {
     ParentDevice.optimizeBusUtilizationForAll(followers);
     PhoenixUtil.registerSignals(canbus, voltage, supplyCurrent, statorCurrent, temp);
     PhoenixUtil.registerSignals(canbus, followerTemps);
-    leader.setPosition(0);
+    tryUntilOk(5, () -> leader.setPosition(0));
     // Set follower behavior
+    if (followers.length != followerAlignments.length) {
+      throw new IllegalArgumentException("Every follower motor must have an alignment value!");
+    }
     for (int i = 0; i < followers.length; i++) {
       followers[i].setControl(new Follower(leader.getDeviceID(), followerAlignments[i]));
     }
   }
 
-  protected void updateMotorInputs(MotorIOInputs inputs) {
+  @Override
+  public void configure(boolean positionControl, boolean velocityControl) {
+    if (positionControl) {
+      configurePositionControl();
+    }
+    if (velocityControl) {
+      configureVelocityControl();
+    }
+  }
+
+  private void configurePositionControl() {
+    if (positionConfigured) return;
+    withControlRequest(new PositionVoltage(0));
+    position.setUpdateFrequency(100.0);
+    PhoenixUtil.registerSignals(leader.getNetwork(), position);
+    resetPosition = new Notifier(() -> leader.setPosition(angleResetVal));
+    positionConfigured = true;
+  }
+
+  private void configureVelocityControl() {
+    if (velocityConfigured) return;
+    velocityRequest = new VelocityVoltage(0);
+    velocity.setUpdateFrequency(100.0);
+    PhoenixUtil.registerSignals(leader.getNetwork(), velocity);
+    velocityConfigured = true;
+  }
+
+  public MotorIOTalonFX withControlRequest(PositionVoltage request) {
+    this.positionRequest = (angle) -> leader.setControl(request.withPosition(angle));
+    return this;
+  }
+
+  public MotorIOTalonFX withControlRequest(MotionMagicVoltage request) {
+    this.positionRequest = (angle) -> leader.setControl(request.withPosition(angle));
+    return this;
+  }
+
+  public MotorIOTalonFX withControlRequest(MotionMagicExpoVoltage request) {
+    this.positionRequest = (angle) -> leader.setControl(request.withPosition(angle));
+    return this;
+  }
+
+  public MotorIOTalonFX withCANcoder(EncoderIOCANcoder encoder) {
+    tryUntilOk(
+        5,
+        () ->
+            leader
+                .getConfigurator()
+                .apply(
+                    new FeedbackConfigs()
+                        .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
+                        .withFeedbackRemoteSensorID(encoder.getDeviceID())));
+    return this;
+  }
+
+  private void updateMotorInputs(MotorIOInputs inputs) {
     inputs.connected = BaseStatusSignal.isAllGood(voltage, supplyCurrent, statorCurrent, temp);
     inputs.appliedVoltage = voltage.getValueAsDouble();
-    inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();
     inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
     inputs.tempCelsius = temp.getValueAsDouble();
 
@@ -91,8 +163,37 @@ public class MotorIOTalonFX implements MotorIO {
   }
 
   @Override
+  public void updateInputs(RollerIOInputs inputs) {
+    inputs.velocityRPS = velocity.getValueAsDouble();
+    updateMotorInputs(inputs);
+  }
+
+  @Override
+  public void updateInputs(PivotIOInputs inputs) {
+    inputs.positionDeg = position.getValue().in(Degrees);
+    updateMotorInputs(inputs);
+  }
+
+  @Override
+  public void updateInputs(LinearSystemIOInputs inputs) {
+    inputs.positionRad = position.getValue().in(Radians);
+    inputs.velocityRadPerSec = velocity.getValue().in(RadiansPerSecond);
+    updateMotorInputs(inputs);
+  }
+
+  @Override
   public void setVoltage(double volts) {
     leader.setControl(voltageRequest.withOutput(volts));
+  }
+
+  @Override
+  public void setPosition(Angle angle) {
+    positionRequest.accept(angle);
+  }
+
+  @Override
+  public void setVelocity(double rps) {
+    leader.setControl(velocityRequest.withVelocity(rps));
   }
 
   @Override
@@ -106,7 +207,22 @@ public class MotorIOTalonFX implements MotorIO {
   }
 
   @Override
+  public void resetPosition(Angle angle) {
+    if (!positionConfigured) return;
+    angleResetVal = angle;
+    resetPosition.startSingle(0);
+  }
+
+  @Override
   public int getNumFollowers() {
     return followers.length;
+  }
+
+  @Override
+  public void close() {
+    if (resetPosition != null) {
+      resetPosition.stop();
+      resetPosition.close();
+    }
   }
 }

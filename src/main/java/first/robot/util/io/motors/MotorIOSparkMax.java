@@ -1,0 +1,185 @@
+package first.robot.util.io.motors;
+
+import static first.robot.util.SparkUtil.tryUntilOk;
+import static org.wpilib.units.Units.*;
+
+import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import first.robot.util.io.motors.elevator.LinearSystemIO;
+import first.robot.util.io.motors.pivot.PivotIO;
+import first.robot.util.io.motors.roller.RollerIO;
+import first.robot.util.io.sensors.EncoderIO;
+import org.wpilib.units.AngleUnit;
+import org.wpilib.units.AngularVelocityUnit;
+import org.wpilib.units.measure.Angle;
+
+public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
+  private static final SparkBaseConfig coastConfig =
+      new SparkMaxConfig().idleMode(SparkBaseConfig.IdleMode.kCoast);
+  private static final SparkBaseConfig brakeConfig =
+      new SparkMaxConfig().idleMode(SparkBaseConfig.IdleMode.kBrake);
+
+  private final SparkMax leader;
+  private final SparkMax[] followers;
+
+  // the unit used for the motor's conversion factor
+  private final AngleUnit positionUnit;
+  private final AngularVelocityUnit velocityUnit;
+
+  private final SparkClosedLoopController controller;
+  private SparkBase.ControlType positionControlType = SparkBase.ControlType.kPosition;
+
+  private final RelativeEncoder leaderEncoder;
+
+  private boolean brakeMode;
+
+  public MotorIOSparkMax(
+      int canbusID,
+      int id,
+      int[] followerIds,
+      SparkMaxConfig config,
+      boolean[] followersOpposed,
+      AngleUnit positionUnit,
+      AngularVelocityUnit velocityUnit) {
+    leader = new SparkMax(canbusID, id, SparkLowLevel.MotorType.kBrushless);
+    followers = new SparkMax[followerIds.length];
+    for (int i = 0; i < followers.length; i++) {
+      followers[i] = new SparkMax(canbusID, followerIds[i], SparkLowLevel.MotorType.kBrushless);
+    }
+
+    tryUntilOk(
+        5,
+        () ->
+            leader.configure(
+                config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    for (int i = 0; i < followers.length; i++) {
+      config.follow(leader.getDeviceId(), followersOpposed[i]);
+      followers[i].configure(
+          config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    }
+
+    this.positionUnit = positionUnit;
+    this.velocityUnit = velocityUnit;
+
+    controller = leader.getClosedLoopController();
+
+    leaderEncoder = leader.getEncoder();
+    leaderEncoder.setPosition(0);
+
+    this.brakeMode = leader.configAccessor.getIdleMode() == SparkBaseConfig.IdleMode.kBrake;
+  }
+
+  public MotorIOSparkMax withPositionControlType(SparkBase.ControlType controlType) {
+    switch (controlType) {
+      case kPosition:
+      case kMAXMotionPositionControl:
+        this.positionControlType = controlType;
+        break;
+      default:
+        throw new IllegalArgumentException("ControlType not supported: " + controlType);
+    }
+    return this;
+  }
+
+  private void updateMotorInputs(MotorIO.MotorIOInputs inputs) {
+    inputs.connected = !leader.hasActiveFault().get();
+    inputs.appliedVoltage = leader.getBusVoltage().get() * leader.getAppliedOutput().get();
+    inputs.statorCurrentAmps = leader.getOutputCurrent().get();
+    inputs.tempCelsius = leader.getMotorTemperature().get();
+
+    for (int i = 0; i < followers.length; i++) {
+      inputs.followerConnected[i] = !followers[i].hasActiveFault().get();
+      inputs.followerTempCelsius[i] = followers[i].getMotorTemperature().get();
+    }
+  }
+
+  @Override
+  public void updateInputs(RollerIOInputs inputs) {
+    inputs.velocityRPS =
+        RotationsPerSecond.convertFrom(leaderEncoder.getVelocity().get(), velocityUnit);
+    updateMotorInputs(inputs);
+  }
+
+  @Override
+  public void updateInputs(PivotIOInputs inputs) {
+    inputs.positionDeg = Degrees.convertFrom(leaderEncoder.getPosition().get(), positionUnit);
+    updateMotorInputs(inputs);
+  }
+
+  @Override
+  public void updateInputs(LinearSystemIOInputs inputs) {
+    inputs.positionRad = Radians.convertFrom(leaderEncoder.getPosition().get(), positionUnit);
+    inputs.velocityRadPerSec =
+        RadiansPerSecond.convertFrom(leaderEncoder.getVelocity().get(), velocityUnit);
+    updateMotorInputs(inputs);
+  }
+
+  @Override
+  public void setVoltage(double volts) {
+    leader.setVoltage(volts);
+  }
+
+  @Override
+  public void setPosition(Angle angle) {
+    controller.setSetpoint(angle.in(positionUnit), positionControlType);
+  }
+
+  @Override
+  public void setVelocity(double rps) {
+    controller.setSetpoint(rps, SparkBase.ControlType.kVelocity);
+  }
+
+  @Override
+  public void coast() {
+    if (brakeMode) {
+      leader.configureAsync(
+          coastConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      for (SparkMax follower : followers) {
+        follower.configureAsync(
+            coastConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      }
+    }
+    brakeMode = false;
+    leader.stopMotor();
+  }
+
+  @Override
+  public void brake() {
+    if (!brakeMode) {
+      leader.configureAsync(
+          brakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      for (SparkMax follower : followers) {
+        follower.configureAsync(
+            brakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      }
+    }
+    brakeMode = true;
+    leader.stopMotor();
+  }
+
+  @Override
+  public void resetPosition(Angle angle) {
+    leaderEncoder.setPosition(angle.in(positionUnit));
+  }
+
+  @Override
+  public int getNumFollowers() {
+    return followers.length;
+  }
+
+  public EncoderIO getAbsoluteEncoder(AngleUnit encoderUnit) {
+    AbsoluteEncoder encoder = leader.getAbsoluteEncoder();
+    return (inputs) -> {
+      inputs.connected = !leader.hasActiveFault().get();
+      inputs.position = encoderUnit.of(encoder.getPosition().get());
+    };
+  }
+}

@@ -1,15 +1,14 @@
-package frc.robot.util.io.motors;
+package first.robot.util.io.motors;
 
 public interface MotorIO {
   abstract class MotorIOInputs {
     public boolean connected;
     public double appliedVoltage;
-    public double supplyCurrentAmps;
     public double statorCurrentAmps;
     public double tempCelsius;
 
-    public boolean[] followerConnected;
-    public double[] followerTempCelsius;
+    public boolean[] followerConnected = new boolean[0];
+    public double[] followerTempCelsius = new double[0];
   }
 
   enum MotorIOMode {
@@ -20,13 +19,22 @@ public interface MotorIO {
     VELOCITY_CONTROL,
   }
 
-  record MechanismConstraints(
+  record RotationalMechanismConstraints(
       double reduction,
       double moi,
       double radiusMeters,
       double minAngleRads,
       double maxAngleRads,
       double startingAngleRads) {}
+
+  record LinearMechanismConstraints(
+      double reduction,
+      double carriageMassKg,
+      double drumRadiusMeters,
+      double minHeightMeters,
+      double maxHeightMeters) {}
+
+  default void configure(boolean positionControl, boolean velocityControl) {}
 
   default void setVoltage(double volts) {}
 

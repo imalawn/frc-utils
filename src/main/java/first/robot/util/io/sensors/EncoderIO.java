@@ -1,9 +1,9 @@
-package frc.robot.util.io.sensors;
+package first.robot.util.io.sensors;
 
-import static edu.wpi.first.units.Units.Rotations;
+import static org.wpilib.units.Units.Rotations;
 
-import edu.wpi.first.units.measure.Angle;
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.units.measure.Angle;
 
 @FunctionalInterface
 public interface EncoderIO {
