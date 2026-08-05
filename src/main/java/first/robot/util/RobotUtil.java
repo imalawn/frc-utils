@@ -29,7 +29,6 @@ public final class RobotUtil {
     }
   }
 
-  public static boolean isPoseEstimatorReady;
   @Setter private static CommandNiDsXboxController driverController;
   @Setter private static CommandNiDsXboxController operatorController;
   private static final PriorityQueue<RumbleRequest> driverRumble = new PriorityQueue<>();
