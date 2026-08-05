@@ -30,7 +30,7 @@ public class Roller extends Motor<RollerIO, RollerIOInputsAutoLogged> {
   }
 
   public void runClosedLoop(double rps) {
-    if (stalled || tempCritical) return;
+    if (tempCritical) return;
 
     io.setVelocity(rps);
     mode = MotorIO.MotorIOMode.VELOCITY_CONTROL;

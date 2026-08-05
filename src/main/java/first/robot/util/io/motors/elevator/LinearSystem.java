@@ -53,7 +53,7 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
   }
 
   public void runClosedLoop(Angle angle) {
-    if (stalled || tempCritical) return;
+    if (tempCritical) return;
 
     io.setPosition(angle);
     mode = MotorIO.MotorIOMode.POSITION_CONTROL;
