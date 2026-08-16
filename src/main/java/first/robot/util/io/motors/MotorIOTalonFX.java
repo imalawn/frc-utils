@@ -47,15 +47,11 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
   private boolean positionConfigured;
   private boolean velocityConfigured;
 
-  public MotorIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
-    this(canbus, id, new int[0], config, new MotorAlignmentValue[0]);
-  }
-
   public MotorIOTalonFX(
       CANBus canbus,
       int id,
-      int[] followerIds,
       TalonFXConfiguration config,
+      int[] followerIds,
       MotorAlignmentValue[] followerAlignments) {
     // Instantiate motors
     leader = new TalonFX(id, canbus);
@@ -93,6 +89,10 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     for (int i = 0; i < followers.length; i++) {
       followers[i].setControl(new Follower(leader.getDeviceID(), followerAlignments[i]));
     }
+  }
+
+  public MotorIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
+    this(canbus, id, config, new int[0], new MotorAlignmentValue[0]);
   }
 
   @Override
@@ -235,6 +235,10 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     if (resetPosition != null) {
       resetPosition.stop();
       resetPosition.close();
+    }
+    leader.close();
+    for (TalonFX follower : followers) {
+      follower.close();
     }
   }
 }

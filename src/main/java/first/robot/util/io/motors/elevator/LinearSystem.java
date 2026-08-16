@@ -16,8 +16,15 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
   private final Function<Distance, Angle> distanceToAngle;
 
   public LinearSystem(
-      String name, LinearSystemIO io, double currentLimit, double drumRadiusMeters) {
-    this(name, io, SubsystemManager::isRobotEnabled, currentLimit, drumRadiusMeters);
+      String name,
+      LinearSystemIO io,
+      BooleanSupplier brakeMode,
+      double currentLimit,
+      Function<Distance, Angle> distanceToAngle) {
+    super(name, io, new LinearSystemIOInputsAutoLogged(), brakeMode, currentLimit);
+    io.configure(true, true);
+    this.distanceToAngle = distanceToAngle;
+    Logger.recordOutput(name + "/SetpointRad", 0.0);
   }
 
   public LinearSystem(
@@ -35,15 +42,8 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
   }
 
   public LinearSystem(
-      String name,
-      LinearSystemIO io,
-      BooleanSupplier brakeMode,
-      double currentLimit,
-      Function<Distance, Angle> distanceToAngle) {
-    super(name, io, new LinearSystemIOInputsAutoLogged(), brakeMode, currentLimit);
-    io.configure(true, true);
-    this.distanceToAngle = distanceToAngle;
-    Logger.recordOutput(name + "/SetpointRad", 0.0);
+      String name, LinearSystemIO io, double currentLimit, double drumRadiusMeters) {
+    this(name, io, SubsystemManager::isRobotEnabled, currentLimit, drumRadiusMeters);
   }
 
   public void periodic() {

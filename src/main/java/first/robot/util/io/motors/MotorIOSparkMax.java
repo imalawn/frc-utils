@@ -42,17 +42,17 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
   private boolean brakeMode;
 
   public MotorIOSparkMax(
-      int canbusID,
+      int busID,
       int id,
-      int[] followerIds,
       SparkMaxConfig config,
-      boolean[] followersOpposed,
       AngleUnit positionUnit,
-      AngularVelocityUnit velocityUnit) {
-    leader = new SparkMax(canbusID, id, SparkLowLevel.MotorType.kBrushless);
+      AngularVelocityUnit velocityUnit,
+      int[] followerIds,
+      boolean[] followersOpposed) {
+    leader = new SparkMax(busID, id, SparkLowLevel.MotorType.kBrushless);
     followers = new SparkMax[followerIds.length];
     for (int i = 0; i < followers.length; i++) {
-      followers[i] = new SparkMax(canbusID, followerIds[i], SparkLowLevel.MotorType.kBrushless);
+      followers[i] = new SparkMax(busID, followerIds[i], SparkLowLevel.MotorType.kBrushless);
     }
 
     tryUntilOk(
@@ -62,8 +62,12 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
                 config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
     for (int i = 0; i < followers.length; i++) {
       config.follow(leader.getDeviceId(), followersOpposed[i]);
-      followers[i].configure(
-          config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+      SparkMax follower = followers[i];
+      tryUntilOk(
+          5,
+          () ->
+              follower.configure(
+                  config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
     }
 
     this.positionUnit = positionUnit;
@@ -75,6 +79,15 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
     leaderEncoder.setPosition(0);
 
     this.brakeMode = leader.configAccessor.getIdleMode() == SparkBaseConfig.IdleMode.kBrake;
+  }
+
+  public MotorIOSparkMax(
+      int busID,
+      int id,
+      SparkMaxConfig config,
+      AngleUnit positionUnit,
+      AngularVelocityUnit velocityUnit) {
+    this(busID, id, config, positionUnit, velocityUnit, new int[0], new boolean[0]);
   }
 
   public MotorIOSparkMax withPositionControlType(SparkBase.ControlType controlType) {

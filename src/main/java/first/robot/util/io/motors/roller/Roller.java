@@ -9,18 +9,18 @@ import org.littletonrobotics.junction.Logger;
 import org.wpilib.units.measure.AngularVelocity;
 
 public class Roller extends Motor<RollerIO, RollerIOInputsAutoLogged> {
-  public Roller(String name, RollerIO io) {
-    this(name, io, 120.0);
+  public Roller(String name, RollerIO io, BooleanSupplier brakeMode, double currentLimit) {
+    super(name, io, new RollerIOInputsAutoLogged(), brakeMode, currentLimit);
+    io.configure(false, true);
+    Logger.recordOutput(name + "/SetpointRPS", 0.0);
   }
 
   public Roller(String name, RollerIO io, double currentLimit) {
     this(name, io, () -> false, currentLimit);
   }
 
-  public Roller(String name, RollerIO io, BooleanSupplier brakeMode, double currentLimit) {
-    super(name, io, new RollerIOInputsAutoLogged(), brakeMode, currentLimit);
-    io.configure(false, true);
-    Logger.recordOutput(name + "/SetpointRPS", 0.0);
+  public Roller(String name, RollerIO io) {
+    this(name, io, 120.0);
   }
 
   public void periodic() {
