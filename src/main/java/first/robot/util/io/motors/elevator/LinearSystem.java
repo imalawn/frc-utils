@@ -1,7 +1,6 @@
 package first.robot.util.io.motors.elevator;
 
-import static org.wpilib.units.Units.Meters;
-import static org.wpilib.units.Units.Radians;
+import static org.wpilib.units.Units.*;
 
 import first.robot.util.io.motors.Motor;
 import first.robot.util.io.motors.MotorIO;
@@ -10,6 +9,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Distance;
 
 public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAutoLogged> {
@@ -22,7 +22,7 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
       double currentLimit,
       Function<Distance, Angle> distanceToAngle) {
     super(name, io, new LinearSystemIOInputsAutoLogged(), brakeMode, currentLimit);
-    io.configure(true, true);
+    io.configure(true, false);
     this.distanceToAngle = distanceToAngle;
     Logger.recordOutput(name + "/SetpointRad", 0.0);
   }
@@ -75,5 +75,13 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
 
   public double getPositionRad() {
     return inputs.positionRad;
+  }
+
+  public AngularVelocity getVelocity() {
+    return RadiansPerSecond.of(inputs.velocityRadPerSec);
+  }
+
+  public double getVelocityRadPerSec() {
+    return inputs.velocityRadPerSec;
   }
 }

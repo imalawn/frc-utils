@@ -1,6 +1,7 @@
 package first.robot.util.io.motors.pivot;
 
 import static org.wpilib.units.Units.Degrees;
+import static org.wpilib.units.Units.DegreesPerSecond;
 
 import first.robot.util.io.motors.Motor;
 import first.robot.util.io.motors.MotorIO;
@@ -8,6 +9,7 @@ import first.robot.util.subsystems.SubsystemManager;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
 
 public class Pivot extends Motor<PivotIO, PivotIOInputsAutoLogged> {
   public Pivot(String name, PivotIO io, BooleanSupplier brakeMode, double currentLimit) {
@@ -49,5 +51,13 @@ public class Pivot extends Motor<PivotIO, PivotIOInputsAutoLogged> {
 
   public double getPositionDeg() {
     return inputs.positionDeg;
+  }
+
+  public AngularVelocity getVelocity() {
+    return DegreesPerSecond.of(inputs.velocityDegPerSec);
+  }
+
+  public double getVelocityDegPerSec() {
+    return inputs.velocityDegPerSec;
   }
 }
