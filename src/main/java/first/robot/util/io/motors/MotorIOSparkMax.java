@@ -41,6 +41,7 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
 
   private boolean brakeMode;
 
+  @SuppressWarnings("resource")
   public MotorIOSparkMax(
       int busID,
       int id,
@@ -124,6 +125,8 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
   @Override
   public void updateInputs(PivotIOInputs inputs) {
     inputs.positionDeg = Degrees.convertFrom(leaderEncoder.getPosition().get(), positionUnit);
+    inputs.velocityDegPerSec =
+        DegreesPerSecond.convertFrom(leaderEncoder.getVelocity().get(), velocityUnit);
     updateMotorInputs(inputs);
   }
 

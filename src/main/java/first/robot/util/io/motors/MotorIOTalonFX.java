@@ -47,6 +47,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
   private boolean positionConfigured;
   private boolean velocityConfigured;
 
+  @SuppressWarnings("resource")
   public MotorIOTalonFX(
       CANBus canbus,
       int id,
@@ -126,6 +127,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
   @Override
   public void updateInputs(PivotIOInputs inputs) {
     inputs.positionDeg = position.getValue().in(Degrees);
+    inputs.velocityDegPerSec = velocity.getValue().in(DegreesPerSecond);
     updateMotorInputs(inputs);
   }
 
@@ -148,6 +150,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   @Override
   public void setPosition(int slot, Angle angle) {
+    if (slot < 0 || slot >= followers.length) return;
     positionRequests.get(slot).accept(angle);
   }
 
@@ -168,14 +171,15 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   @Override
   public void resetPosition(Angle angle) {
-    if (!positionConfigured) return;
     angleResetVal = angle;
     resetPosition.startSingle(0);
   }
 
   private void configurePositionControl() {
     if (positionConfigured) return;
-    usingControlRequest(new PositionVoltage(0));
+    if (positionRequests == null) {
+      usingControlRequest(new PositionVoltage(0));
+    }
     position.setUpdateFrequency(100.0);
     PhoenixUtil.registerSignals(leader.getNetwork(), position);
     resetPosition = new Notifier(() -> leader.setPosition(angleResetVal));

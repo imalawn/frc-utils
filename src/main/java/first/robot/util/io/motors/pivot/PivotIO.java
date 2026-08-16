@@ -8,6 +8,7 @@ public interface PivotIO extends MotorIO {
   @AutoLog
   class PivotIOInputs extends MotorIOInputs {
     public double positionDeg;
+    public double velocityDegPerSec;
   }
 
   default void updateInputs(PivotIOInputs inputs) {}
