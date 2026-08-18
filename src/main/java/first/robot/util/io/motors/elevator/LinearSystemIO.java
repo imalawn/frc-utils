@@ -15,6 +15,10 @@ public interface LinearSystemIO extends MotorIO {
 
   default void setPosition(Angle angle) {}
 
+  default void setPosition(int slot, Angle angle) {
+    setPosition(angle);
+  }
+
   default void setVelocity(double rps) {}
 
   default void resetPosition(Angle angle) {}

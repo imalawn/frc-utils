@@ -29,7 +29,7 @@ public class Roller extends Motor<RollerIO, RollerIOInputsAutoLogged> {
     super.periodic();
   }
 
-  public void runClosedLoop(double rps) {
+  public void runVelocity(double rps) {
     if (tempCritical) return;
 
     io.setVelocity(rps);

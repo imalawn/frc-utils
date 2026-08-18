@@ -57,7 +57,7 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
     }
   }
 
-  public void runOpenLoop(double volts) {
+  public void runVoltage(double volts) {
     if (tempCritical) return;
 
     io.setVoltage(volts);

@@ -24,11 +24,11 @@ class MotorConfigureTest {
     ConfigTrackingMotorIO io = new ConfigTrackingMotorIO();
     Roller roller = new Roller("TestRoller", io);
 
-    assertDoesNotThrow(() -> roller.runClosedLoop(5.0));
+    assertDoesNotThrow(() -> roller.runVelocity(5.0));
     assertTrue(io.velocityControlCalled());
     assertDoesNotThrow(roller::getVelocity);
     assertDoesNotThrow(roller::getVelocityRPS);
-    assertDoesNotThrow(() -> roller.runOpenLoop(3.0));
+    assertDoesNotThrow(() -> roller.runVoltage(3.0));
     assertDoesNotThrow(roller::stop);
     assertDoesNotThrow(roller::periodic);
   }
@@ -38,13 +38,13 @@ class MotorConfigureTest {
     ConfigTrackingMotorIO io = new ConfigTrackingMotorIO();
     Pivot pivot = new Pivot("TestPivot", io);
 
-    assertDoesNotThrow(() -> pivot.runClosedLoop(Degrees.of(90.0)));
+    assertDoesNotThrow(() -> pivot.runPosition(Degrees.of(90.0)));
     assertTrue(io.positionControlCalled());
     assertDoesNotThrow(() -> pivot.resetPosition(Degrees.of(0.0)));
     assertTrue(io.resetPositionCalled());
     assertDoesNotThrow(pivot::getPosition);
     assertDoesNotThrow(pivot::getPositionDeg);
-    assertDoesNotThrow(() -> pivot.runOpenLoop(3.0));
+    assertDoesNotThrow(() -> pivot.runVoltage(3.0));
     assertDoesNotThrow(pivot::stop);
     assertDoesNotThrow(pivot::periodic);
   }
@@ -54,14 +54,14 @@ class MotorConfigureTest {
     ConfigTrackingMotorIO io = new ConfigTrackingMotorIO();
     LinearSystem linearSystem = new LinearSystem("TestLinearSystem", io, 120.0, 0.05);
 
-    assertDoesNotThrow(() -> linearSystem.runClosedLoop(Degrees.of(45.0)));
+    assertDoesNotThrow(() -> linearSystem.runPosition(Degrees.of(45.0)));
     assertTrue(io.positionControlCalled());
-    assertDoesNotThrow(() -> linearSystem.runClosedLoop(Meters.of(0.05)));
+    assertDoesNotThrow(() -> linearSystem.runPosition(Meters.of(0.05)));
     assertDoesNotThrow(() -> linearSystem.resetPosition(Degrees.of(0.0)));
     assertTrue(io.resetPositionCalled());
     assertDoesNotThrow(linearSystem::getPosition);
     assertDoesNotThrow(linearSystem::getPositionRad);
-    assertDoesNotThrow(() -> linearSystem.runOpenLoop(3.0));
+    assertDoesNotThrow(() -> linearSystem.runVoltage(3.0));
     assertDoesNotThrow(linearSystem::stop);
     assertDoesNotThrow(linearSystem::periodic);
   }
@@ -71,7 +71,7 @@ class MotorConfigureTest {
     ConfigTrackingMotorIO io = new MisconfiguringMotorIO();
     Roller roller = new Roller("TestRoller", io);
 
-    assertThrows(NullPointerException.class, () -> roller.runClosedLoop(5.0));
+    assertThrows(NullPointerException.class, () -> roller.runVelocity(5.0));
   }
 
   @Test
@@ -79,7 +79,7 @@ class MotorConfigureTest {
     ConfigTrackingMotorIO io = new MisconfiguringMotorIO();
     Pivot pivot = new Pivot("TestPivot", io);
 
-    assertThrows(NullPointerException.class, () -> pivot.runClosedLoop(Degrees.of(90.0)));
+    assertThrows(NullPointerException.class, () -> pivot.runPosition(Degrees.of(90.0)));
     assertThrows(NullPointerException.class, () -> pivot.resetPosition(Degrees.of(0.0)));
   }
 
@@ -92,7 +92,7 @@ class MotorConfigureTest {
     roller.periodic();
     assertTrue(roller.isTempCritical());
 
-    assertDoesNotThrow(() -> roller.runClosedLoop(5.0));
+    assertDoesNotThrow(() -> roller.runVelocity(5.0));
     assertFalse(io.velocityControlCalled());
   }
 
