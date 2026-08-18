@@ -148,7 +148,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   @Override
   public void setPosition(int slot, Angle angle) {
-    if (slot < 0 || slot >= followers.length) return;
+    if (slot < 0 || slot >= positionRequests.size()) return;
     positionRequests.get(slot).accept(angle);
   }
 

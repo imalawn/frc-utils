@@ -52,25 +52,17 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
     super.periodic();
   }
 
-  public void runPosition(int slot, Angle angle) {
+  public void runPosition(Angle angle) {
     if (tempCritical) return;
 
-    io.setPosition(slot, angle);
+    io.setPosition(angle);
     mode = MotorIO.MotorIOMode.POSITION_CONTROL;
     Logger.recordOutput(name + "/SetpointRad", angle.in(Radians));
     Logger.recordOutput(name + "/MotorMode", mode);
   }
 
-  public void runPosition(Angle angle) {
-    runPosition(0, angle);
-  }
-
-  public void runPosition(int slot, Distance position) {
-    runPosition(slot, distanceToAngle.apply(position));
-  }
-
   public void runPosition(Distance position) {
-    runPosition(0, position);
+    runPosition(distanceToAngle.apply(position));
   }
 
   public void resetPosition(Angle newPosition) {
