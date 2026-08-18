@@ -19,17 +19,15 @@ import first.robot.util.io.motors.pivot.PivotIO;
 import first.robot.util.io.motors.roller.RollerIO;
 import first.robot.util.io.sensors.EncoderIOCANcoder;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 import org.wpilib.system.Notifier;
 import org.wpilib.units.measure.*;
 
 public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearSystemIO {
-  protected final TalonFX leader;
-  protected final TalonFX[] followers;
+  private final TalonFX leader;
+  private final TalonFX[] followers;
 
   private VelocityVoltage velocityRequest;
-  private List<Consumer<Angle>> positionRequests;
+  private PositionRequest[] positionRequests;
   private final VoltageOut voltageRequest = new VoltageOut(0);
   private final CoastOut coastRequest = new CoastOut();
   private final StaticBrake brakeRequest = new StaticBrake();
@@ -44,13 +42,19 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
   private volatile Angle angleResetVal = Rotations.zero();
   private Notifier resetPosition;
 
+  @FunctionalInterface
+  private interface PositionRequest {
+    void apply(TalonFX motor, Angle angle);
+  }
+
   @SuppressWarnings("resource")
-  public MotorIOTalonFX(
+  private MotorIOTalonFX(
       CANBus canbus,
       int id,
       TalonFXConfiguration config,
       int[] followerIds,
-      MotorAlignmentValue[] followerAlignments) {
+      MotorAlignmentValue[] followerAlignments,
+      PositionRequest[] positionRequests) {
     // Instantiate motors
     leader = new TalonFX(id, canbus);
     followers = new TalonFX[followerIds.length];
@@ -88,10 +92,36 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     for (int i = 0; i < followers.length; i++) {
       followers[i].setControl(new Follower(leader.getDeviceID(), followerAlignments[i]));
     }
+    this.positionRequests = positionRequests;
   }
 
+  @Deprecated
+  public MotorIOTalonFX(
+      CANBus canbus,
+      int id,
+      TalonFXConfiguration config,
+      int[] followerIds,
+      MotorAlignmentValue[] followerAlignments) {
+    this(canbus, id, config, followerIds, followerAlignments, new PositionRequest[0]);
+  }
+
+  @Deprecated
   public MotorIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
     this(canbus, id, config, new int[0], new MotorAlignmentValue[0]);
+  }
+
+  @Deprecated
+  public MotorIOTalonFX withControlRequest(PositionVoltage request) {
+    positionRequests =
+        new PositionRequest[] {(leader, angle) -> leader.setControl(request.withPosition(angle))};
+    return this;
+  }
+
+  @Deprecated
+  public MotorIOTalonFX withControlRequest(MotionMagicVoltage request) {
+    positionRequests =
+        new PositionRequest[] {(leader, angle) -> leader.setControl(request.withPosition(angle))};
+    return this;
   }
 
   @Override
@@ -143,13 +173,13 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   @Override
   public void setPosition(Angle angle) {
-    positionRequests.getFirst().accept(angle);
+    positionRequests[0].apply(leader, angle);
   }
 
   @Override
   public void setPosition(int slot, Angle angle) {
-    if (slot < 0 || slot >= positionRequests.size()) return;
-    positionRequests.get(slot).accept(angle);
+    if (slot < 0 || slot >= positionRequests.length) return;
+    positionRequests[slot].apply(leader, angle);
   }
 
   @Override
@@ -173,56 +203,6 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     resetPosition.startSingle(0);
   }
 
-  private void configurePositionControl() {
-    if (resetPosition != null) return;
-    if (positionRequests == null) {
-      usingControlRequest(new PositionVoltage(0));
-    }
-    resetPosition = new Notifier(() -> leader.setPosition(angleResetVal));
-  }
-
-  private void configureVelocityControl() {
-    if (velocityRequest != null) return;
-    velocityRequest = new VelocityVoltage(0);
-    velocity.setUpdateFrequency(100.0);
-    PhoenixUtil.registerSignals(leader.getNetwork(), velocity);
-  }
-
-  private void addControlRequestPrivate(Consumer<Angle> request) {
-    if (positionRequests == null) {
-      positionRequests = new ArrayList<>(1);
-    }
-    positionRequests.add(request);
-  }
-
-  public MotorIOTalonFX usingControlRequest(PositionVoltage request) {
-    addControlRequestPrivate(angle -> leader.setControl(request.withPosition(angle)));
-    return this;
-  }
-
-  public MotorIOTalonFX usingControlRequest(MotionMagicVoltage request) {
-    addControlRequestPrivate(angle -> leader.setControl(request.withPosition(angle)));
-    return this;
-  }
-
-  public MotorIOTalonFX usingControlRequest(MotionMagicExpoVoltage request) {
-    addControlRequestPrivate(angle -> leader.setControl(request.withPosition(angle)));
-    return this;
-  }
-
-  public MotorIOTalonFX withCANcoder(EncoderIOCANcoder encoder) {
-    tryUntilOk(
-        5,
-        () ->
-            leader
-                .getConfigurator()
-                .apply(
-                    new FeedbackConfigs()
-                        .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
-                        .withFeedbackRemoteSensorID(encoder.getDeviceID())));
-    return this;
-  }
-
   @Override
   public int getNumFollowers() {
     return followers.length;
@@ -237,6 +217,100 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     leader.close();
     for (TalonFX follower : followers) {
       follower.close();
+    }
+  }
+
+  private void configurePositionControl() {
+    if (resetPosition != null) return;
+    if (positionRequests == null || positionRequests.length == 0) {
+      PositionVoltage defaultRequest = new PositionVoltage(0);
+      positionRequests =
+          new PositionRequest[] {
+            (leader, angle) -> leader.setControl(defaultRequest.withPosition(angle))
+          };
+    }
+    resetPosition = new Notifier(() -> leader.setPosition(angleResetVal));
+  }
+
+  private void configureVelocityControl() {
+    if (velocityRequest != null) return;
+    velocityRequest = new VelocityVoltage(0);
+    velocity.setUpdateFrequency(100.0);
+    PhoenixUtil.registerSignals(leader.getNetwork(), velocity);
+  }
+
+  private void configureWithEncoder(EncoderIOCANcoder encoder) {
+    tryUntilOk(
+        5,
+        () ->
+            leader
+                .getConfigurator()
+                .apply(
+                    new FeedbackConfigs()
+                        .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
+                        .withFeedbackRemoteSensorID(encoder.getDeviceID())));
+  }
+
+  public static class Builder {
+    private record FollowerMotor(int id, MotorAlignmentValue alignment) {}
+
+    private final CANBus canbus;
+    private final int id;
+    private final TalonFXConfiguration config;
+    private final ArrayList<FollowerMotor> followers = new ArrayList<>();
+    private final ArrayList<PositionRequest> positionRequests = new ArrayList<>();
+    private EncoderIOCANcoder encoder;
+
+    public Builder(CANBus canbus, int id, TalonFXConfiguration config) {
+      this.canbus = canbus;
+      this.id = id;
+      this.config = config;
+    }
+
+    public Builder addFollower(int id, MotorAlignmentValue alignment) {
+      followers.add(new FollowerMotor(id, alignment));
+      return this;
+    }
+
+    public Builder addControlRequest(PositionVoltage request) {
+      positionRequests.add((leader, angle) -> leader.setControl(request.withPosition(angle)));
+      return this;
+    }
+
+    public Builder addControlRequest(MotionMagicVoltage request) {
+      positionRequests.add((leader, angle) -> leader.setControl(request.withPosition(angle)));
+      return this;
+    }
+
+    public Builder addControlRequest(MotionMagicExpoVoltage request) {
+      positionRequests.add((leader, angle) -> leader.setControl(request.withPosition(angle)));
+      return this;
+    }
+
+    public Builder addCANCoder(EncoderIOCANcoder encoder) {
+      this.encoder = encoder;
+      return this;
+    }
+
+    public MotorIOTalonFX build() {
+      int[] followerIds = new int[followers.size()];
+      MotorAlignmentValue[] followerAlignments = new MotorAlignmentValue[followers.size()];
+      for (int i = 0; i < followers.size(); i++) {
+        followerIds[i] = followers.get(i).id;
+        followerAlignments[i] = followers.get(i).alignment;
+      }
+      MotorIOTalonFX io =
+          new MotorIOTalonFX(
+              canbus,
+              id,
+              config,
+              followerIds,
+              followerAlignments,
+              positionRequests.toArray(new PositionRequest[0]));
+      if (encoder != null) {
+        io.configureWithEncoder(encoder);
+      }
+      return io;
     }
   }
 }
