@@ -18,8 +18,7 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
   private final Alert tempFault;
   @Getter protected boolean tempCritical;
 
-  protected Motor(
-      String name, IOType io, InputsType inputs, BooleanSupplier brakeMode, double currentLimit) {
+  protected Motor(String name, IOType io, InputsType inputs, BooleanSupplier brakeMode) {
     this.name = name;
     this.io = io;
     this.inputs = inputs;

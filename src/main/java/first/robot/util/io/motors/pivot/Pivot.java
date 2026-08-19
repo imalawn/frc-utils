@@ -12,18 +12,13 @@ import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.AngularVelocity;
 
 public class Pivot extends Motor<PivotIO, PivotIOInputsAutoLogged> {
-  public Pivot(String name, PivotIO io, BooleanSupplier brakeMode, double currentLimit) {
-    super(name, io, new PivotIOInputsAutoLogged(), brakeMode, currentLimit);
+  public Pivot(String name, PivotIO io, BooleanSupplier brakeMode) {
+    super(name, io, new PivotIOInputsAutoLogged(), brakeMode);
     io.configure(true, false);
-    Logger.recordOutput(name + "/SetpointDeg", 0.0);
-  }
-
-  public Pivot(String name, PivotIO io, double currentLimit) {
-    this(name, io, SubsystemManager::isRobotEnabled, currentLimit);
   }
 
   public Pivot(String name, PivotIO io) {
-    this(name, io, 120.0);
+    this(name, io, SubsystemManager::isRobotEnabled);
   }
 
   public void periodic() {

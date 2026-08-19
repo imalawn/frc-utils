@@ -19,31 +19,19 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
       String name,
       LinearSystemIO io,
       BooleanSupplier brakeMode,
-      double currentLimit,
       Function<Distance, Angle> distanceToAngle) {
-    super(name, io, new LinearSystemIOInputsAutoLogged(), brakeMode, currentLimit);
+    super(name, io, new LinearSystemIOInputsAutoLogged(), brakeMode);
     io.configure(true, false);
     this.distanceToAngle = distanceToAngle;
-    Logger.recordOutput(name + "/SetpointRad", 0.0);
   }
 
   public LinearSystem(
-      String name,
-      LinearSystemIO io,
-      BooleanSupplier brakeMode,
-      double currentLimit,
-      double drumRadiusMeters) {
-    this(
-        name,
-        io,
-        brakeMode,
-        currentLimit,
-        distance -> Radians.of(distance.in(Meters) / drumRadiusMeters));
+      String name, LinearSystemIO io, BooleanSupplier brakeMode, double drumRadiusMeters) {
+    this(name, io, brakeMode, distance -> Radians.of(distance.in(Meters) / drumRadiusMeters));
   }
 
-  public LinearSystem(
-      String name, LinearSystemIO io, double currentLimit, double drumRadiusMeters) {
-    this(name, io, SubsystemManager::isRobotEnabled, currentLimit, drumRadiusMeters);
+  public LinearSystem(String name, LinearSystemIO io, double drumRadiusMeters) {
+    this(name, io, SubsystemManager::isRobotEnabled, drumRadiusMeters);
   }
 
   public void periodic() {
