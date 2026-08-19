@@ -52,11 +52,12 @@ class MotorConfigureTest {
   @Test
   void linearSystemConfigurationDoesNotCauseErrors() {
     ConfigTrackingMotorIO io = new ConfigTrackingMotorIO();
-    LinearSystem linearSystem = new LinearSystem("TestLinearSystem", io, 0.05);
+    LinearSystem linearSystem = new LinearSystem.Builder("TestLinearSystem", io).build();
 
     assertDoesNotThrow(() -> linearSystem.runPosition(Degrees.of(45.0)));
     assertTrue(io.positionControlCalled());
     assertDoesNotThrow(() -> linearSystem.runPosition(Meters.of(0.05)));
+    assertDoesNotThrow(() -> linearSystem.runVelocity(1.05));
     assertDoesNotThrow(() -> linearSystem.resetPosition(Degrees.of(0.0)));
     assertTrue(io.resetPositionCalled());
     assertDoesNotThrow(linearSystem::getPosition);

@@ -1,14 +1,19 @@
 package first.robot.util.io.motors;
 
+import first.robot.util.io.sensors.EncoderIO;
+import first.robot.util.io.sensors.EncoderIOInputsAutoLogged;
 import java.util.function.BooleanSupplier;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.driverstation.Alert;
+import org.wpilib.units.measure.Angle;
 
 public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.MotorIOInputs> {
   protected final String name;
   protected final IOType io;
   protected final InputsType inputs;
+  protected final EncoderIO encoderIO;
+  protected final EncoderIOInputsAutoLogged encoderInputs = new EncoderIOInputsAutoLogged();
   protected MotorIO.MotorIOMode mode;
 
   private final BooleanSupplier brakeDurNeutral;
@@ -18,11 +23,12 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
   private final Alert tempFault;
   @Getter protected boolean tempCritical;
 
-  protected Motor(String name, IOType io, InputsType inputs, BooleanSupplier brakeMode) {
+  protected Motor(
+      String name, IOType io, InputsType inputs, EncoderIO encoderIO, BooleanSupplier brakeMode) {
     this.name = name;
     this.io = io;
     this.inputs = inputs;
-    this.mode = brakeMode.getAsBoolean() ? MotorIO.MotorIOMode.BRAKE : MotorIO.MotorIOMode.COAST;
+    this.encoderIO = encoderIO;
     this.brakeDurNeutral = brakeMode;
 
     // Initialize input arrays
@@ -41,6 +47,9 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
   }
 
   public void periodic() {
+    encoderIO.updateInputs(encoderInputs);
+    Logger.processInputs(name, encoderInputs);
+
     double highestTemp = inputs.tempCelsius;
     for (double temp : inputs.followerTempCelsius) {
       highestTemp = Math.max(highestTemp, temp);
@@ -73,6 +82,10 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
       mode = MotorIO.MotorIOMode.COAST;
     }
     Logger.recordOutput(name + "/MotorMode", mode);
+  }
+
+  public Angle getAbsolutePosition() {
+    return encoderInputs.absolutePosition;
   }
 
   public boolean isConnected() {

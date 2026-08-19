@@ -25,7 +25,7 @@ public class EncoderIOCANcoder implements EncoderIO {
   @Override
   public void updateInputs(EncoderIOInputs inputs) {
     inputs.connected = position.getStatus().isOK();
-    inputs.position = position.getValue();
+    inputs.absolutePosition = position.getValue();
   }
 
   public int getDeviceID() {

@@ -10,7 +10,7 @@ import org.wpilib.units.measure.AngularVelocity;
 
 public class Roller extends Motor<RollerIO, RollerIOInputsAutoLogged> {
   public Roller(String name, RollerIO io, BooleanSupplier brakeMode) {
-    super(name, io, new RollerIOInputsAutoLogged(), brakeMode);
+    super(name, io, new RollerIOInputsAutoLogged(), in -> {}, brakeMode);
     io.configure(false, true);
   }
 

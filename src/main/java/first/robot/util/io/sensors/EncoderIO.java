@@ -10,7 +10,7 @@ public interface EncoderIO {
   @AutoLog
   class EncoderIOInputs {
     public boolean connected = false;
-    public Angle position = Rotations.zero();
+    public Angle absolutePosition = Rotations.zero();
   }
 
   void updateInputs(EncoderIOInputs inputs);

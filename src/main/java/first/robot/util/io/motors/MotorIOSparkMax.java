@@ -195,7 +195,7 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
     AbsoluteEncoder encoder = leader.getAbsoluteEncoder();
     return (inputs) -> {
       inputs.connected = !leader.hasActiveFault().get();
-      inputs.position = encoderUnit.of(encoder.getPosition().get());
+      inputs.absolutePosition = encoderUnit.of(encoder.getPosition().get());
     };
   }
 }

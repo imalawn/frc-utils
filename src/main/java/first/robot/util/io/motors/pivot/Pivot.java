@@ -5,6 +5,7 @@ import static org.wpilib.units.Units.DegreesPerSecond;
 
 import first.robot.util.io.motors.Motor;
 import first.robot.util.io.motors.MotorIO;
+import first.robot.util.io.sensors.EncoderIO;
 import first.robot.util.subsystems.SubsystemManager;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
@@ -12,13 +13,17 @@ import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.AngularVelocity;
 
 public class Pivot extends Motor<PivotIO, PivotIOInputsAutoLogged> {
-  public Pivot(String name, PivotIO io, BooleanSupplier brakeMode) {
-    super(name, io, new PivotIOInputsAutoLogged(), brakeMode);
+  public Pivot(String name, PivotIO io, EncoderIO encoderIO, BooleanSupplier brakeMode) {
+    super(name, io, new PivotIOInputsAutoLogged(), encoderIO, brakeMode);
     io.configure(true, false);
   }
 
+  public Pivot(String name, PivotIO io, EncoderIO encoderIO) {
+    this(name, io, encoderIO, SubsystemManager::isRobotEnabled);
+  }
+
   public Pivot(String name, PivotIO io) {
-    this(name, io, SubsystemManager::isRobotEnabled);
+    this(name, io, in -> {});
   }
 
   public void periodic() {

@@ -4,6 +4,7 @@ import static org.wpilib.units.Units.*;
 
 import first.robot.util.io.motors.Motor;
 import first.robot.util.io.motors.MotorIO;
+import first.robot.util.io.sensors.EncoderIO;
 import first.robot.util.subsystems.SubsystemManager;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
@@ -15,23 +16,15 @@ import org.wpilib.units.measure.Distance;
 public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAutoLogged> {
   private final Function<Distance, Angle> distanceToAngle;
 
-  public LinearSystem(
+  private LinearSystem(
       String name,
       LinearSystemIO io,
+      EncoderIO encoderIO,
       BooleanSupplier brakeMode,
       Function<Distance, Angle> distanceToAngle) {
-    super(name, io, new LinearSystemIOInputsAutoLogged(), brakeMode);
-    io.configure(true, false);
+    super(name, io, new LinearSystemIOInputsAutoLogged(), encoderIO, brakeMode);
+    io.configure(true, true);
     this.distanceToAngle = distanceToAngle;
-  }
-
-  public LinearSystem(
-      String name, LinearSystemIO io, BooleanSupplier brakeMode, double drumRadiusMeters) {
-    this(name, io, brakeMode, distance -> Radians.of(distance.in(Meters) / drumRadiusMeters));
-  }
-
-  public LinearSystem(String name, LinearSystemIO io, double drumRadiusMeters) {
-    this(name, io, SubsystemManager::isRobotEnabled, drumRadiusMeters);
   }
 
   public void periodic() {
@@ -53,6 +46,15 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
     runPosition(distanceToAngle.apply(position));
   }
 
+  public void runVelocity(double rps) {
+    if (tempCritical) return;
+
+    io.setVelocity(rps);
+    mode = MotorIO.MotorIOMode.VELOCITY_CONTROL;
+    Logger.recordOutput(name + "/SetpointRPS", rps);
+    Logger.recordOutput(name + "/MotorMode", mode);
+  }
+
   public void resetPosition(Angle newPosition) {
     io.resetPosition(newPosition);
   }
@@ -71,5 +73,47 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
 
   public double getVelocityRadPerSec() {
     return inputs.velocityRadPerSec;
+  }
+
+  public static class Builder {
+    private final String name;
+    private final LinearSystemIO io;
+    private EncoderIO encoderIO = inputs -> {};
+    private BooleanSupplier brakeMode = SubsystemManager::isRobotEnabled;
+    private Function<Distance, Angle> distanceToAngle;
+
+    public Builder(String name, LinearSystemIO io) {
+      this.name = name;
+      this.io = io;
+    }
+
+    public Builder addEncoder(EncoderIO encoderIO) {
+      this.encoderIO = encoderIO;
+      return this;
+    }
+
+    public Builder setBrakeMode(BooleanSupplier brakeMode) {
+      this.brakeMode = brakeMode;
+      return this;
+    }
+
+    public Builder setDrumRadius(double drumRadiusMeters) {
+      if (distanceToAngle == null) {
+        distanceToAngle = distance -> Radians.of(distance.in(Meters) / drumRadiusMeters);
+      }
+      return this;
+    }
+
+    public Builder useCustomPositionFunction(Function<Distance, Angle> distanceToAngle) {
+      this.distanceToAngle = distanceToAngle;
+      return this;
+    }
+
+    public LinearSystem build() {
+      if (distanceToAngle == null) {
+        distanceToAngle = distance -> Rotations.zero();
+      }
+      return new LinearSystem(name, io, encoderIO, brakeMode, distanceToAngle);
+    }
   }
 }
