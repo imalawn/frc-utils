@@ -54,7 +54,8 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
       TalonFXConfiguration config,
       int[] followerIds,
       MotorAlignmentValue[] followerAlignments,
-      PositionRequest[] positionRequests) {
+      PositionRequest[] positionRequests,
+      EncoderIOCANcoder encoder) {
     // Instantiate motors
     leader = new TalonFX(id, canbus);
     followers = new TalonFX[followerIds.length];
@@ -93,6 +94,18 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
       followers[i].setControl(new Follower(leader.getDeviceID(), followerAlignments[i]));
     }
     this.positionRequests = positionRequests;
+    // Configure feedback
+    if (encoder != null) {
+      tryUntilOk(
+          5,
+          () ->
+              leader
+                  .getConfigurator()
+                  .apply(
+                      new FeedbackConfigs()
+                          .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
+                          .withFeedbackRemoteSensorID(encoder.getDeviceID())));
+    }
   }
 
   @Deprecated
@@ -102,7 +115,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
       TalonFXConfiguration config,
       int[] followerIds,
       MotorAlignmentValue[] followerAlignments) {
-    this(canbus, id, config, followerIds, followerAlignments, new PositionRequest[0]);
+    this(canbus, id, config, followerIds, followerAlignments, new PositionRequest[0], null);
   }
 
   @Deprecated
@@ -239,18 +252,6 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     PhoenixUtil.registerSignals(leader.getNetwork(), velocity);
   }
 
-  private void configureWithEncoder(EncoderIOCANcoder encoder) {
-    tryUntilOk(
-        5,
-        () ->
-            leader
-                .getConfigurator()
-                .apply(
-                    new FeedbackConfigs()
-                        .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
-                        .withFeedbackRemoteSensorID(encoder.getDeviceID())));
-  }
-
   public static class Builder {
     private record FollowerMotor(int id, MotorAlignmentValue alignment) {}
 
@@ -299,18 +300,14 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
         followerIds[i] = followers.get(i).id;
         followerAlignments[i] = followers.get(i).alignment;
       }
-      MotorIOTalonFX io =
-          new MotorIOTalonFX(
-              canbus,
-              id,
-              config,
-              followerIds,
-              followerAlignments,
-              positionRequests.toArray(new PositionRequest[0]));
-      if (encoder != null) {
-        io.configureWithEncoder(encoder);
-      }
-      return io;
+      return new MotorIOTalonFX(
+          canbus,
+          id,
+          config,
+          followerIds,
+          followerAlignments,
+          positionRequests.toArray(new PositionRequest[0]),
+          encoder);
     }
   }
 }
