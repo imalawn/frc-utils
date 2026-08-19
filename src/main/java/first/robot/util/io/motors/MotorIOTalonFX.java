@@ -6,7 +6,6 @@ import static org.wpilib.units.Units.*;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -102,8 +101,8 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
               leader
                   .getConfigurator()
                   .apply(
-                      new FeedbackConfigs()
-                          .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
+                      config.Feedback.withFeedbackSensorSource(
+                              FeedbackSensorSourceValue.FusedCANcoder)
                           .withFeedbackRemoteSensorID(encoder.getDeviceID())));
     }
   }

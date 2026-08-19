@@ -45,7 +45,7 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
   public MotorIOSparkMax(
       int busID,
       int id,
-      SparkMaxConfig config,
+      SparkBaseConfig config,
       AngleUnit positionUnit,
       AngularVelocityUnit velocityUnit,
       int[] followerIds,
@@ -85,7 +85,7 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
   public MotorIOSparkMax(
       int busID,
       int id,
-      SparkMaxConfig config,
+      SparkBaseConfig config,
       AngleUnit positionUnit,
       AngularVelocityUnit velocityUnit) {
     this(busID, id, config, positionUnit, velocityUnit, new int[0], new boolean[0]);

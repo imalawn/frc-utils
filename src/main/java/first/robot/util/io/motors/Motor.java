@@ -84,6 +84,14 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
     Logger.recordOutput(name + "/MotorMode", mode);
   }
 
+  public Angle getAbsolutePosition(boolean refresh) {
+    if (refresh) {
+      encoderIO.updateInputs(encoderInputs);
+      Logger.processInputs(name, encoderInputs);
+    }
+    return encoderInputs.absolutePosition;
+  }
+
   public Angle getAbsolutePosition() {
     return encoderInputs.absolutePosition;
   }
