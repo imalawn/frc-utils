@@ -74,4 +74,28 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
     }
     Logger.recordOutput(name + "/MotorMode", mode);
   }
+
+  public boolean isConnected() {
+    return inputs.connected;
+  }
+
+  public double getAppliedVoltage() {
+    return inputs.appliedVoltage;
+  }
+
+  public double getStatorCurrentAmps() {
+    return inputs.statorCurrentAmps;
+  }
+
+  public double getTempCelsius() {
+    return inputs.tempCelsius;
+  }
+
+  public boolean[] getFollowerConnected() {
+    return inputs.followerConnected;
+  }
+
+  public double[] getFollowerTempCelsius() {
+    return inputs.followerTempCelsius;
+  }
 }
