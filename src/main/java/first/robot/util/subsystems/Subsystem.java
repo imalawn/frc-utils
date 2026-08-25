@@ -13,10 +13,13 @@ public abstract class Subsystem extends Mechanism {
     Scheduler.getDefault().addPeriodic(this::periodic);
   }
 
+  /** Logic to run when the robot enters the enabled state. */
   public void enable() {}
 
+  /** Logic to run when the robot enters the disabled state. */
   public void disable() {}
 
+  /** Logic to run periodically at the same frequency as the scheduler (typically 50 Hz). */
   public void periodic() {}
 
   /**

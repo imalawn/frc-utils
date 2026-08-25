@@ -18,6 +18,7 @@ public class Roller extends Motor<RollerIO, RollerIOInputsAutoLogged> {
     this(name, io, () -> false);
   }
 
+  /** {@inheritDoc} */
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs(name, inputs);

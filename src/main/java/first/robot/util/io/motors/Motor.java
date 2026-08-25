@@ -46,6 +46,10 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
     Logger.recordOutput(name + "/MotorMode", mode);
   }
 
+  /**
+   * Updates motor and encoder inputs and handles motor safety features. Call this first in your
+   * subsystem {@code periodic()} method.
+   */
   public void periodic() {
     encoderIO.updateInputs(encoderInputs);
     Logger.processInputs(name, encoderInputs);

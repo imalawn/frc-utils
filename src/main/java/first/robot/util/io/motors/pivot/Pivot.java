@@ -26,6 +26,7 @@ public class Pivot extends Motor<PivotIO, PivotIOInputsAutoLogged> {
     this(name, io, in -> {});
   }
 
+  /** {@inheritDoc} */
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs(name, inputs);

@@ -107,6 +107,17 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     }
   }
 
+  /**
+   * Constructs a new MotorIOTalonFX.
+   *
+   * @param canbus The CAN bus this device is connected on
+   * @param id The CAN ID of the leader motor
+   * @param config The config to apply to the motors
+   * @param followerIds The CAN IDs of the follower motors
+   * @param followerAlignments The alignments of the follower motors relative to the leader
+   * @deprecated Use {@link MotorIOTalonFX.Builder} instead, which provides a more streamlined setup
+   *     process with more customizability.
+   */
   @Deprecated
   public MotorIOTalonFX(
       CANBus canbus,
@@ -117,19 +128,42 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     this(canbus, id, config, followerIds, followerAlignments, new PositionRequest[0], null);
   }
 
+  /**
+   * Constructs a new MotorIOTalonFX.
+   *
+   * @param canbus The CAN bus this device is connected on
+   * @param id The CAN ID of the leader motor
+   * @param config The config to apply to the motors
+   * @deprecated Use {@link MotorIOTalonFX.Builder} instead, which provides a more streamlined setup
+   *     process with more customizability.
+   */
   @Deprecated
   public MotorIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
     this(canbus, id, config, new int[0], new MotorAlignmentValue[0]);
   }
 
-  @Deprecated
+  /**
+   * Set a custom {@link PositionVoltage} request to use as the position control request.
+   *
+   * @param request Control request to use
+   * @return The modified {@link MotorIOTalonFX} object for method chaining
+   * @deprecated Use {@link MotorIOTalonFX.Builder#addControlRequest(PositionVoltage)} instead.
+   */
+  @Deprecated(forRemoval = true)
   public MotorIOTalonFX withControlRequest(PositionVoltage request) {
     positionRequests =
         new PositionRequest[] {(leader, angle) -> leader.setControl(request.withPosition(angle))};
     return this;
   }
 
-  @Deprecated
+  /**
+   * Set a custom {@link MotionMagicVoltage} request to use as the position control request.
+   *
+   * @param request Control request to use
+   * @return The modified {@link MotorIOTalonFX} object for method chaining
+   * @deprecated Use {@link MotorIOTalonFX.Builder#addControlRequest(MotionMagicVoltage)} instead.
+   */
+  @Deprecated(forRemoval = true)
   public MotorIOTalonFX withControlRequest(MotionMagicVoltage request) {
     positionRequests =
         new PositionRequest[] {(leader, angle) -> leader.setControl(request.withPosition(angle))};

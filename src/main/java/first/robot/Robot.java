@@ -4,6 +4,7 @@
 
 package first.robot;
 
+import first.robot.util.subsystems.SubsystemManager;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.framework.TimedRobot;
 
@@ -58,11 +59,18 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when the robot is disabled. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    SubsystemManager.getInstance().disable();
+  }
 
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {}
+
+  @Override
+  public void disabledExit() {
+    SubsystemManager.getInstance().enable();
+  }
 
   /** This function is called once when utility mode is enabled. */
   @Override

@@ -27,6 +27,7 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
     this.distanceToAngle = distanceToAngle;
   }
 
+  /** {@inheritDoc} */
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs(name, inputs);
