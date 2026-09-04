@@ -25,7 +25,7 @@ public final class RobotUtil {
 
     @Override
     public int compareTo(RumbleRequest other) {
-      return other.priority - this.priority;
+      return Integer.compare(other.priority, this.priority);
     }
   }
 

@@ -7,7 +7,6 @@ import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
@@ -35,7 +34,7 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
   private final AngularVelocityUnit velocityUnit;
 
   private final SparkClosedLoopController controller;
-  private SparkBase.ControlType positionControlType = SparkBase.ControlType.kPosition;
+  private SparkLowLevel.ControlType positionControlType = SparkLowLevel.ControlType.kPosition;
 
   private final RelativeEncoder leaderEncoder;
 
@@ -91,14 +90,10 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
     this(busID, id, config, positionUnit, velocityUnit, new int[0], new boolean[0]);
   }
 
-  public MotorIOSparkMax withPositionControlType(SparkBase.ControlType controlType) {
+  public MotorIOSparkMax withPositionControlType(SparkLowLevel.ControlType controlType) {
     switch (controlType) {
-      case kPosition:
-      case kMAXMotionPositionControl:
-        this.positionControlType = controlType;
-        break;
-      default:
-        throw new IllegalArgumentException("ControlType not supported: " + controlType);
+      case kPosition, kMAXMotionPositionControl -> this.positionControlType = controlType;
+      default -> throw new IllegalArgumentException("ControlType not supported: " + controlType);
     }
     return this;
   }
@@ -150,7 +145,7 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
 
   @Override
   public void setVelocity(double rps) {
-    controller.setSetpoint(rps, SparkBase.ControlType.kVelocity);
+    controller.setSetpoint(rps, SparkLowLevel.ControlType.kVelocity);
   }
 
   @Override
@@ -193,7 +188,7 @@ public class MotorIOSparkMax implements RollerIO, PivotIO, LinearSystemIO {
 
   public EncoderIO getAbsoluteEncoder(AngleUnit encoderUnit) {
     AbsoluteEncoder encoder = leader.getAbsoluteEncoder();
-    return (inputs) -> {
+    return inputs -> {
       inputs.connected = !leader.hasActiveFault().get();
       inputs.absolutePosition = encoderUnit.of(encoder.getPosition().get());
     };

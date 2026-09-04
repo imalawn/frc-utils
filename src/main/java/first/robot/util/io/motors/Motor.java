@@ -8,24 +8,24 @@ import org.littletonrobotics.junction.Logger;
 import org.wpilib.driverstation.Alert;
 import org.wpilib.units.measure.Angle;
 
-public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.MotorIOInputs> {
+public abstract class Motor<T extends MotorIO, U extends MotorIO.MotorIOInputs> {
   protected final String name;
-  protected final IOType io;
-  protected final InputsType inputs;
+  protected final String modeLogKey;
+  protected final T io;
+  protected final U inputs;
   protected final EncoderIO encoderIO;
   protected final EncoderIOInputsAutoLogged encoderInputs = new EncoderIOInputsAutoLogged();
   protected MotorIO.MotorIOMode mode;
 
   private final BooleanSupplier brakeDurNeutral;
 
-  private final Alert torqueLimitWarning;
   private final Alert tempWarning;
   private final Alert tempFault;
   @Getter protected boolean tempCritical;
 
-  protected Motor(
-      String name, IOType io, InputsType inputs, EncoderIO encoderIO, BooleanSupplier brakeMode) {
+  protected Motor(String name, T io, U inputs, EncoderIO encoderIO, BooleanSupplier brakeMode) {
     this.name = name;
+    this.modeLogKey = name + "/MotorMode";
     this.io = io;
     this.inputs = inputs;
     this.encoderIO = encoderIO;
@@ -36,14 +36,12 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
     inputs.followerTempCelsius = new double[io.getNumFollowers()];
 
     // Initialize alerts
-    torqueLimitWarning =
-        new Alert(name, "Motor torque limited, disabling to prevent damage", Alert.Level.MEDIUM);
     tempWarning = new Alert(name, "Motor temperature above 60°C", Alert.Level.MEDIUM);
     tempFault = new Alert(name, "Motor disabled due to temperature above 75°C", Alert.Level.HIGH);
 
     // Use correct brake/coast state
     stop();
-    Logger.recordOutput(name + "/MotorMode", mode);
+    Logger.recordOutput(modeLogKey, mode);
   }
 
   /**
@@ -74,7 +72,7 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
 
     io.setVoltage(volts);
     mode = MotorIO.MotorIOMode.VOLTAGE_CONTROL;
-    Logger.recordOutput(name + "/MotorMode", mode);
+    Logger.recordOutput(modeLogKey, mode);
   }
 
   public void stop() {
@@ -85,7 +83,7 @@ public abstract class Motor<IOType extends MotorIO, InputsType extends MotorIO.M
       io.coast();
       mode = MotorIO.MotorIOMode.COAST;
     }
-    Logger.recordOutput(name + "/MotorMode", mode);
+    Logger.recordOutput(modeLogKey, mode);
   }
 
   public Angle getAbsolutePosition(boolean refresh) {

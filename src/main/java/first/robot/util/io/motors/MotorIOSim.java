@@ -38,8 +38,7 @@ public class MotorIOSim implements MotorIO {
 
   @Override
   public void brake() {
-    isClosedLoop = false;
-    appliedVoltage = 0.0;
+    coast();
   }
 
   @Override

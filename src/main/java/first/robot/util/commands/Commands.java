@@ -10,6 +10,10 @@ import org.wpilib.command3.NeedsNameBuilderStage;
  * framework.
  */
 public final class Commands {
+  private Commands() {
+    /* This utility class should not be instantiated */
+  }
+
   /**
    * Constructs a command that does nothing, finishing immediately.
    *

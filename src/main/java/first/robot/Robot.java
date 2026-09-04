@@ -13,7 +13,7 @@ import org.wpilib.framework.TimedRobot;
  * the TimedRobot documentation. If you change the name of this class or the package after creating
  * this project, you must also update the Main.java file in the project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.

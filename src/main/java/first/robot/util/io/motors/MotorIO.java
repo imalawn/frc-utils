@@ -1,6 +1,8 @@
 package first.robot.util.io.motors;
 
 public interface MotorIO {
+  String VERSION = "2.1.1";
+
   abstract class MotorIOInputs {
     public boolean connected;
     public double appliedVoltage;

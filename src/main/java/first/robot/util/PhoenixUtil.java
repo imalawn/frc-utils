@@ -20,6 +20,10 @@ import java.util.function.Supplier;
 import org.wpilib.system.Notifier;
 
 public final class PhoenixUtil {
+  private PhoenixUtil() {
+    /* This utility class should not be instantiated */
+  }
+
   /** Attempts to run the command until no error is produced. */
   public static void tryUntilOk(int maxAttempts, Supplier<StatusCode> command) {
     for (int i = 0; i < maxAttempts; i++) {

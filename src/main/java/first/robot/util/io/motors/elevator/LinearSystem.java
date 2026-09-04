@@ -28,6 +28,7 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
   }
 
   /** {@inheritDoc} */
+  @Override
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs(name, inputs);

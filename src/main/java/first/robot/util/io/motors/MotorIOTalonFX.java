@@ -118,7 +118,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
    * @deprecated Use {@link MotorIOTalonFX.Builder} instead, which provides a more streamlined setup
    *     process with more customizability.
    */
-  @Deprecated
+  @Deprecated(since = "2.1")
   public MotorIOTalonFX(
       CANBus canbus,
       int id,
@@ -137,7 +137,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
    * @deprecated Use {@link MotorIOTalonFX.Builder} instead, which provides a more streamlined setup
    *     process with more customizability.
    */
-  @Deprecated
+  @Deprecated(since = "2.1.0")
   public MotorIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
     this(canbus, id, config, new int[0], new MotorAlignmentValue[0]);
   }

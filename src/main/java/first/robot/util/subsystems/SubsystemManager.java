@@ -6,7 +6,7 @@ import lombok.Getter;
 
 public class SubsystemManager {
   private static SubsystemManager instance;
-  @Getter private static boolean robotEnabled;
+  @Getter private boolean robotEnabled;
 
   /** Returns the singleton instance of the {@link SubsystemManager}. */
   public static SubsystemManager getInstance() {
@@ -20,10 +20,7 @@ public class SubsystemManager {
 
   public void registerSubsystem(Subsystem... subsystems) {
     for (Subsystem subsystem : subsystems) {
-      if (subsystem == null) {
-        continue;
-      }
-      if (this.subsystems.contains(subsystem)) {
+      if (subsystem == null || this.subsystems.contains(subsystem)) {
         continue;
       }
       this.subsystems.add(subsystem);

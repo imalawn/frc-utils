@@ -12,6 +12,10 @@ import com.revrobotics.spark.SparkBase;
 import java.util.function.*;
 
 public class SparkUtil {
+  private SparkUtil() {
+    /* This utility class should not be instantiated */
+  }
+
   /** Stores whether any error was has been detected by other utility methods. */
   public static boolean sparkStickyFault = false;
 
