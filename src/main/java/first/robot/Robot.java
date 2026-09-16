@@ -6,7 +6,6 @@ package first.robot;
 
 import first.robot.util.subsystems.SubsystemManager;
 import org.wpilib.command3.Scheduler;
-import org.wpilib.framework.TimedRobot;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in

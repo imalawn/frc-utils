@@ -19,7 +19,6 @@ import first.robot.util.io.motors.roller.RollerIO;
 import first.robot.util.io.sensors.EncoderIOCANcoder;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
-
 import org.wpilib.system.Notifier;
 import org.wpilib.units.measure.*;
 
@@ -266,6 +265,22 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     for (TalonFX follower : followers) {
       follower.close();
     }
+  }
+
+  /**
+   * Returns the unwrapped motor object. Not recommended for regular use; be careful with
+   * non-deterministic method calls.
+   */
+  public TalonFX getRawIO() {
+    return leader;
+  }
+
+  /**
+   * Returns the unwrapped follower motor object(s). Not recommended for regular use; be careful
+   * with non-deterministic method calls.
+   */
+  public TalonFX[] getRawFollowerIO() {
+    return followers;
   }
 
   private void configurePositionControl() {
