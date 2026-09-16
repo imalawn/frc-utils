@@ -18,6 +18,8 @@ import first.robot.util.io.motors.pivot.PivotIO;
 import first.robot.util.io.motors.roller.RollerIO;
 import first.robot.util.io.sensors.EncoderIOCANcoder;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.wpilib.system.Notifier;
 import org.wpilib.units.measure.*;
 
@@ -38,7 +40,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
   private final StatusSignal<Temperature> temp;
   private final BaseStatusSignal[] followerTemps;
 
-  private volatile Angle angleResetVal = Rotations.zero();
+  private final AtomicReference<Angle> angleResetVal = new AtomicReference<>();
   private Notifier resetPosition;
 
   @FunctionalInterface
@@ -118,7 +120,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
    * @deprecated Use {@link MotorIOTalonFX.Builder} instead, which provides a more streamlined setup
    *     process with more customizability.
    */
-  @Deprecated(since = "2.1")
+  @Deprecated(since = "2.1.0")
   public MotorIOTalonFX(
       CANBus canbus,
       int id,
@@ -245,7 +247,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   @Override
   public void resetPosition(Angle angle) {
-    angleResetVal = angle;
+    angleResetVal.set(angle);
     resetPosition.startSingle(0);
   }
 
@@ -275,7 +277,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
             (leader, angle) -> leader.setControl(defaultRequest.withPosition(angle))
           };
     }
-    resetPosition = new Notifier(() -> leader.setPosition(angleResetVal));
+    resetPosition = new Notifier(() -> leader.setPosition(angleResetVal.get()));
   }
 
   private void configureVelocityControl() {
