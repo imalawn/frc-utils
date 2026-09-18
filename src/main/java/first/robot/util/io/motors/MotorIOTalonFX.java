@@ -268,16 +268,16 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
   }
 
   /**
-   * Returns the unwrapped motor object. Not recommended for regular use; be careful with
-   * non-deterministic method calls.
+   * Returns the unwrapped motor object for more advanced control. Not recommended for regular use;
+   * be careful with non-deterministic method calls.
    */
   public TalonFX getRawIO() {
     return leader;
   }
 
   /**
-   * Returns the unwrapped follower motor object(s). Not recommended for regular use; be careful
-   * with non-deterministic method calls.
+   * Returns the unwrapped follower motor object(s) for more advanced control. Not recommended for
+   * regular use; be careful with non-deterministic method calls.
    */
   public TalonFX[] getRawFollowerIO() {
     return followers;
