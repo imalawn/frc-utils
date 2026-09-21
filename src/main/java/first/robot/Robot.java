@@ -5,6 +5,7 @@
 package first.robot;
 
 import first.robot.util.subsystems.SubsystemManager;
+import org.littletonrobotics.junction.LoggedRobot;
 import org.wpilib.command3.Scheduler;
 
 /**

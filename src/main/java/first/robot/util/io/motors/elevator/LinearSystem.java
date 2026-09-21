@@ -81,7 +81,7 @@ public class LinearSystem extends Motor<LinearSystemIO, LinearSystemIOInputsAuto
     private final String name;
     private final LinearSystemIO io;
     private EncoderIO encoderIO = inputs -> {};
-    private BooleanSupplier brakeMode = SubsystemManager::isRobotEnabled;
+    private BooleanSupplier brakeMode = SubsystemManager.getInstance()::isRobotEnabled;
     private Function<Distance, Angle> distanceToAngle;
 
     public Builder(String name, LinearSystemIO io) {

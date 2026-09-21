@@ -28,6 +28,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   private VelocityVoltage velocityRequest;
   private PositionRequest[] positionRequests;
+  private final ControlRequest[] customRequests;
   private final VoltageOut voltageRequest = new VoltageOut(0);
   private final CoastOut coastRequest = new CoastOut();
   private final StaticBrake brakeRequest = new StaticBrake();
@@ -47,6 +48,11 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     void apply(TalonFX motor, Angle angle);
   }
 
+  @FunctionalInterface
+  public interface ControlRequest {
+    void apply(TalonFX motor, double output);
+  }
+
   @SuppressWarnings("resource")
   private MotorIOTalonFX(
       CANBus canbus,
@@ -55,6 +61,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
       int[] followerIds,
       MotorAlignmentValue[] followerAlignments,
       PositionRequest[] positionRequests,
+      ControlRequest[] customRequests,
       EncoderIOCANcoder encoder) {
     // Instantiate motors
     leader = new TalonFX(id, canbus);
@@ -94,6 +101,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
       followers[i].setControl(new Follower(leader.getDeviceID(), followerAlignments[i]));
     }
     this.positionRequests = positionRequests;
+    this.customRequests = customRequests;
     // Configure feedback
     if (encoder != null) {
       tryUntilOk(
@@ -126,7 +134,15 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
       TalonFXConfiguration config,
       int[] followerIds,
       MotorAlignmentValue[] followerAlignments) {
-    this(canbus, id, config, followerIds, followerAlignments, new PositionRequest[0], null);
+    this(
+        canbus,
+        id,
+        config,
+        followerIds,
+        followerAlignments,
+        new PositionRequest[0],
+        new ControlRequest[0],
+        null);
   }
 
   /**
@@ -234,6 +250,16 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     leader.setControl(velocityRequest.withVelocity(rps));
   }
 
+  /**
+   * This method is designed to allow using other compatible ControlRequest types from the Phoenix 6
+   * API with this motor that are not explicitly offered in the {@link Builder} methods. This method
+   * may also be used to call user-defined callbacks that require the raw motor object.
+   */
+  public void setOutput(int slot, double output) {
+    if (slot < 0 || slot >= customRequests.length) return;
+    customRequests[slot].apply(leader, output);
+  }
+
   @Override
   public void coast() {
     leader.setControl(coastRequest);
@@ -269,7 +295,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   /**
    * Returns the unwrapped motor object for more advanced control. Not recommended for regular use;
-   * be careful with non-deterministic method calls.
+   * may cause unexpected behavior.
    */
   public TalonFX getRawIO() {
     return leader;
@@ -277,7 +303,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
 
   /**
    * Returns the unwrapped follower motor object(s) for more advanced control. Not recommended for
-   * regular use; be careful with non-deterministic method calls.
+   * regular use; may cause unexpected behavior.
    */
   public TalonFX[] getRawFollowerIO() {
     return followers;
@@ -310,6 +336,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
     private final TalonFXConfiguration config;
     private final ArrayList<FollowerMotor> followers = new ArrayList<>();
     private final ArrayList<PositionRequest> positionRequests = new ArrayList<>();
+    private final ArrayList<ControlRequest> customRequests = new ArrayList<>();
     private EncoderIOCANcoder encoder;
 
     public Builder(CANBus canbus, int id, TalonFXConfiguration config) {
@@ -338,6 +365,17 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
       return this;
     }
 
+    /**
+     * This method is designed to allow using other compatible ControlRequest types from the Phoenix
+     * 6 API with this motor that are not explicitly offered in the other {@link
+     * Builder#addControlRequest} methods. This method may also be used to add user-defined
+     * callbacks that require the raw motor object.
+     */
+    public Builder addControlRequest(ControlRequest request) {
+      customRequests.add(request);
+      return this;
+    }
+
     public Builder addCANCoder(EncoderIOCANcoder encoder) {
       this.encoder = encoder;
       return this;
@@ -357,6 +395,7 @@ public class MotorIOTalonFX implements AutoCloseable, RollerIO, PivotIO, LinearS
           followerIds,
           followerAlignments,
           positionRequests.toArray(new PositionRequest[0]),
+          customRequests.toArray(new ControlRequest[0]),
           encoder);
     }
   }

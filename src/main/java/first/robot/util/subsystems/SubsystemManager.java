@@ -6,7 +6,6 @@ import lombok.Getter;
 
 public class SubsystemManager {
   private static SubsystemManager instance;
-  @Getter private boolean robotEnabled;
 
   /** Returns the singleton instance of the {@link SubsystemManager}. */
   public static SubsystemManager getInstance() {
@@ -15,6 +14,8 @@ public class SubsystemManager {
     }
     return instance;
   }
+
+  @Getter private boolean robotEnabled;
 
   private final Set<Subsystem> subsystems = new HashSet<>();
 

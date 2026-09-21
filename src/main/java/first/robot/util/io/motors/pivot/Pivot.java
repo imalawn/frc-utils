@@ -19,7 +19,7 @@ public class Pivot extends Motor<PivotIO, PivotIOInputsAutoLogged> {
   }
 
   public Pivot(String name, PivotIO io, EncoderIO encoderIO) {
-    this(name, io, encoderIO, SubsystemManager::isRobotEnabled);
+    this(name, io, encoderIO, SubsystemManager.getInstance()::isRobotEnabled);
   }
 
   public Pivot(String name, PivotIO io) {

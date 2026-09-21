@@ -121,4 +121,9 @@ public abstract class Motor<T extends MotorIO, U extends MotorIO.MotorIOInputs> 
   public double[] getFollowerTempCelsius() {
     return inputs.followerTempCelsius;
   }
+
+  /** Returns the wrapped motor IO object used by this mechanism. */
+  public T getIO() {
+    return io;
+  }
 }
