@@ -1,4 +1,4 @@
-package first.robot.util.io.sensors;
+package first.robot.util.io.sensors.encoder;
 
 import static org.wpilib.units.Units.Rotations;
 

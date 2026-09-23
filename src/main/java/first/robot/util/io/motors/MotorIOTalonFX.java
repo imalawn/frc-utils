@@ -16,7 +16,7 @@ import first.robot.util.PhoenixUtil;
 import first.robot.util.io.motors.elevator.LinearSystemIO;
 import first.robot.util.io.motors.pivot.PivotIO;
 import first.robot.util.io.motors.roller.RollerIO;
-import first.robot.util.io.sensors.EncoderIOCANcoder;
+import first.robot.util.io.sensors.encoder.EncoderIOCANcoder;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import org.wpilib.system.Notifier;

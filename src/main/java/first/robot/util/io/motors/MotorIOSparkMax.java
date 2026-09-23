@@ -15,7 +15,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import first.robot.util.io.motors.elevator.LinearSystemIO;
 import first.robot.util.io.motors.pivot.PivotIO;
 import first.robot.util.io.motors.roller.RollerIO;
-import first.robot.util.io.sensors.EncoderIO;
+import first.robot.util.io.sensors.encoder.EncoderIO;
 import org.wpilib.units.AngleUnit;
 import org.wpilib.units.AngularVelocityUnit;
 import org.wpilib.units.measure.Angle;

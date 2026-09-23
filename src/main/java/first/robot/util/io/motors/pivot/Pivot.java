@@ -5,7 +5,7 @@ import static org.wpilib.units.Units.DegreesPerSecond;
 
 import first.robot.util.io.motors.Motor;
 import first.robot.util.io.motors.MotorIO;
-import first.robot.util.io.sensors.EncoderIO;
+import first.robot.util.io.sensors.encoder.EncoderIO;
 import first.robot.util.subsystems.SubsystemManager;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;

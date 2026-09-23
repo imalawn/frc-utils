@@ -19,7 +19,7 @@ import first.robot.util.io.motors.pivot.PivotIOSim;
 import first.robot.util.io.motors.roller.Roller;
 import first.robot.util.io.motors.roller.RollerIO;
 import first.robot.util.io.motors.roller.RollerIOSim;
-import first.robot.util.io.sensors.EncoderIOCANcoder;
+import first.robot.util.io.sensors.encoder.EncoderIOCANcoder;
 import first.robot.util.subsystems.Subsystem;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.simulation.SingleJointedArmSim;

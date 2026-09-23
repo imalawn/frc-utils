@@ -1,7 +1,7 @@
 package first.robot.util.io.motors;
 
-import first.robot.util.io.sensors.EncoderIO;
-import first.robot.util.io.sensors.EncoderIOInputsAutoLogged;
+import first.robot.util.io.sensors.encoder.EncoderIO;
+import first.robot.util.io.sensors.encoder.EncoderIOInputsAutoLogged;
 import java.util.function.BooleanSupplier;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
